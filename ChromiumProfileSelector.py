@@ -107,7 +107,6 @@ class ProfileSelector(gtk.Window):
         """Populate the list of available Profiles."""
         store = gtk.ListStore(str)
         fileList = dircache.listdir(profileDirectory)
-#        print fileList
         store.clear()
         for cur in fileList:
             store.append([cur])
@@ -123,13 +122,11 @@ class ProfileSelector(gtk.Window):
 
     def on_activated(self, widget, row, col):
         """Execute Chromium with the selected profile."""
-#        print "selected"
         self.launchChromium(widget)
         return
 
     def on_add_clicked(self, widget):
         """Add a new profile after asking for its name."""
-#        print "add clicked"
 
         newProfile = self.getProfileName(message="Geben sie den namen des neuen Profils an:")
 
@@ -146,7 +143,6 @@ class ProfileSelector(gtk.Window):
 
     def on_edit_clicked(self, widget):
         """Rename a profile."""
-#        print "edit clicked"
 
         model, itr = self.treeView.get_selection().get_selected()
         itemsToMove =model.get(itr,0)
@@ -170,8 +166,6 @@ class ProfileSelector(gtk.Window):
 
         itemsToDelete =model.get(itr,0)
 
-#        print itemsToDelete
-        
         for item in itemsToDelete:
             shutil.rmtree(os.path.join(profileDirectory, item))
 
@@ -182,7 +176,6 @@ class ProfileSelector(gtk.Window):
     def keypress(self, widget, event):
         """Exit on escape press"""
         if event.keyval == gtk.keysyms.Escape:
-#            print "Escape pressed closing!"
             gtk.main_quit()
         return
 
@@ -190,7 +183,6 @@ class ProfileSelector(gtk.Window):
         """Start Chromium with the selected profile.
         
         Do so by forking and closing th initial process."""
-#        print "Launch Chromium!"
 
         model, itr = self.treeView.get_selection().get_selected()
         items =model.get(itr,0)
@@ -231,7 +223,6 @@ class ProfileSelector(gtk.Window):
 
     def checkIfExists(self, absolutePath):
         """Check if a Profile with that name already exists."""
-        # User input is bad so we check if the Directory already exists.
         if(os.path.exists(absolutePath)):
             dialog = gtk.MessageDialog(
                 parent=self,
@@ -247,7 +238,6 @@ class ProfileSelector(gtk.Window):
             return False
 
 
-print __name__
 if(__name__=="__main__"):
     prof = ProfileSelector()
     gtk.main()
