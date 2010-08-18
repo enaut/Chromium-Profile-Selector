@@ -146,7 +146,7 @@ class ProfileSelector(gtk.Window):
 
     def on_edit_clicked(self, widget):
         """Rename a profile."""
-        print "edit clicked"
+#        print "edit clicked"
 
         model, itr = self.treeView.get_selection().get_selected()
         itemsToMove =model.get(itr,0)
@@ -247,7 +247,7 @@ class ProfileSelector(gtk.Window):
             return False
 
 
-
-if(__name__=="main"):
+print __name__
+if(__name__=="__main__"):
     prof = ProfileSelector()
     gtk.main()
