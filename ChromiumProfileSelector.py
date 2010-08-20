@@ -6,7 +6,7 @@ Benutzung:
     Wähle ein Profil und starte Chromium mit einem Klick auf ok.
 
 Pfade:
-    * Ort der Profile: /home/enaut/.config/ChromiumProfiles
+    * Ort der Profile: ~/.config/ChromiumProfiles
     * Ausführbare Datei: /usr/bin/chromium-browser
 
 License:
@@ -21,7 +21,7 @@ import dircache
 import os
 import shutil
 
-profileDirectory = "/home/enaut/.config/ChromiumProfiles"
+profileDirectory = os.path.expanduser("~/.config/ChromiumProfiles")
 chromiumExecutable = "/usr/bin/chromium-browser"
 
 class ProfileSelector:
