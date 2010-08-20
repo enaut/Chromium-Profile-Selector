@@ -116,7 +116,14 @@ class ProfileSelector:
         fileList = dircache.listdir(profileDirectory)
         store.clear()
         for cur in fileList:
-            store.append([cur])
+            absPath = os.path.join(profileDirectory, cur)
+            if os.path.isdir(absPath):
+
+                if "Default" in dircache.listdir(absPath):
+                    store.append([cur])
+                elif len(dircache.listdir(absPath)) == 0:
+                    store.append([cur])
+                    
         return store
 
     def create_columns(self, treeView):
