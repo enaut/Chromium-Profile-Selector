@@ -24,39 +24,46 @@ import shutil
 profileDirectory = "/home/enaut/.config/ChromiumProfiles"
 chromiumExecutable = "/usr/bin/chromium-browser"
 
-class ProfileSelector(gtk.Window):
+class ProfileSelector:
     """A class that is the selection window and contains all the functions nessessary."""
 
-    treeView=None
+    window = gtk.Window()
+    editAndListBox = gtk.HBox(False,8)
+    topAndNavBox = gtk.VBox(False, 8)
+    navigation = gtk.HBox(False,8)
+
+    buttonAdd = None
+    buttonEdit = None
+    buttonRemove = None
+    buttonCancel = None
+    buttonExecute = None
+
+    treeView = None
 
     def __init__(self):
-        super(ProfileSelector, self).__init__()
+        self.window.set_size_request(400,400)
+        self.window.set_position(gtk.WIN_POS_CENTER)
+        self.window.set_border_width(8)
 
-        self.set_size_request(400,400)
-        self.set_position(gtk.WIN_POS_CENTER)
-        self.set_border_width(8)
-
-        self.connect("key-press-event", self.keypress)
-        self.connect("destroy", gtk.main_quit)
-        self.set_title("Profile Selector")
-
-        vbox = gtk.VBox(False, 8)
-        self.hbox = gtk.HBox(False, 8)
-        navigation = gtk.HBox(False,8)
-
+        self.window.connect("key-press-event", self.keypress)
+        self.window.connect("destroy", gtk.main_quit)
+        self.window.set_title("Profile Selector")
         desc = gtk.Label("\nWähle ein Profil mit dem Chromium gestartet werden soll.\n")
 
-        self.add_edit_buttons(self.hbox)
-        self.add_list(self.hbox)
-        self.add_navigation_buttons(navigation)
+        self.add_edit_buttons(self.editAndListBox)
+        self.add_list(self.editAndListBox)
+        self.add_navigation_buttons(self.navigation)
 
-        vbox.pack_start(desc, False, False, 0)
-        vbox.pack_start(self.hbox, True, True, 0)
-        vbox.pack_end(navigation, False, False, 0)
+        self.treeView.set_cursor("0")
 
+        self.topAndNavBox.pack_start(desc, False, False, 0)
+        self.topAndNavBox.pack_start(self.editAndListBox, True, True, 0)
+        self.topAndNavBox.pack_end(self.navigation, False, False, 0)
 
-        self.add(vbox)
-        self.show_all()
+        self.enableDisableButton()
+
+        self.window.add(self.topAndNavBox)
+        self.window.show_all()
         return
 
     def add_list(self, hbox):
@@ -64,7 +71,7 @@ class ProfileSelector(gtk.Window):
         store = self.create_model()
         self.treeView = gtk.TreeView(store)
         self.treeView.connect("row-activated", self.on_activated)
-        self.treeView.set_rules_hint(True)
+        self.treeView.connect("cursor-changed", self.on_cursor_changed)
         self.create_columns(self.treeView)
 
         hbox.pack_end(self.treeView, True, True, 0)
@@ -74,17 +81,17 @@ class ProfileSelector(gtk.Window):
         """Add the left buttonbar with the edit buttons to the hBox."""
         buttonbox= gtk.VBox(False, 2)
 
-        button = gtk.Button(stock=gtk.STOCK_ADD)
-        button.connect("clicked", self.on_add_clicked)
-        buttonbox.pack_start(button, False, False, 0)
+        self.buttonAdd = gtk.Button(stock=gtk.STOCK_ADD)
+        self.buttonAdd.connect("clicked", self.on_add_clicked)
+        buttonbox.pack_start(self.buttonAdd, False, False, 0)
 
-        button = gtk.Button(stock=gtk.STOCK_EDIT)
-        button.connect("clicked", self.on_edit_clicked)
-        buttonbox.pack_start(button, False, False, 0)
+        self.buttonEdit = gtk.Button(stock=gtk.STOCK_EDIT)
+        self.buttonEdit.connect("clicked", self.on_edit_clicked)
+        buttonbox.pack_start(self.buttonEdit, False, False, 0)
         
-        button = gtk.Button(stock=gtk.STOCK_REMOVE)
-        button.connect("clicked", self.on_remove_clicked)
-        buttonbox.pack_start(button, False, False, 0)
+        self.buttonRemove = gtk.Button(stock=gtk.STOCK_REMOVE)
+        self.buttonRemove.connect("clicked", self.on_remove_clicked)
+        buttonbox.pack_start(self.buttonRemove, False, False, 0)
         
         hbox.pack_start(buttonbox, False, False, 0)
         return
@@ -93,13 +100,13 @@ class ProfileSelector(gtk.Window):
         """Add the bottom navigation buttons to the vBox"""
         buttonbox= box
 
-        button = gtk.Button(stock=gtk.STOCK_EXECUTE)
-        button.connect("clicked", self.launchChromium)
-        buttonbox.pack_end(button, False, False, 0)
+        self.buttonExecute = gtk.Button(stock=gtk.STOCK_EXECUTE)
+        self.buttonExecute.connect("clicked", self.launchChromium)
+        buttonbox.pack_end(self.buttonExecute, False, False, 0)
 
-        button = gtk.Button(stock=gtk.STOCK_CANCEL)
-        button.connect("clicked", gtk.main_quit)
-        buttonbox.pack_end(button, False, False, 0)
+        self.buttonCancel = gtk.Button(stock=gtk.STOCK_CANCEL)
+        self.buttonCancel.connect("clicked", gtk.main_quit)
+        buttonbox.pack_end(self.buttonCancel, False, False, 0)
 
         return
 
@@ -120,10 +127,22 @@ class ProfileSelector(gtk.Window):
         treeView.append_column(column)
         return
 
+    def enableDisableButton(self):
+        """Disable Buttons if not applicable."""
+        mode = (1 == self.treeView.get_selection().count_selected_rows())
+        self.buttonRemove.set_sensitive(mode)
+        self.buttonEdit.set_sensitive(mode)
+        self.buttonExecute.set_sensitive(mode)
+
+
     def on_activated(self, widget, row, col):
         """Execute Chromium with the selected profile."""
         self.launchChromium(widget)
         return
+
+    def on_cursor_changed(self, widget):
+        """React to cursor changes"""
+        self.enableDisableButton()
 
     def on_add_clicked(self, widget):
         """Add a new profile after asking for its name."""
@@ -138,6 +157,7 @@ class ProfileSelector(gtk.Window):
         os.mkdir(absolutePath)
 
         self.treeView.props.model = self.create_model()
+        self.enableDisableButton()
 
         return
 
@@ -158,6 +178,7 @@ class ProfileSelector(gtk.Window):
         os.rename(absolutePathOld, absolutePathNew)
 
         self.treeView.props.model = self.create_model()
+        self.enableDisableButton()
         return
 
     def on_remove_clicked(self, widget):
@@ -170,6 +191,7 @@ class ProfileSelector(gtk.Window):
             shutil.rmtree(os.path.join(profileDirectory, item))
 
         self.treeView.props.model = self.create_model()
+        self.enableDisableButton()
         
         return
 
@@ -202,7 +224,7 @@ class ProfileSelector(gtk.Window):
     def getProfileName(self, message):
         """Return the text entered in its dialogbox."""
         dialog = gtk.MessageDialog(
-                None,
+                self.window,
                 gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
                 gtk.MESSAGE_QUESTION,
                 gtk.BUTTONS_OK,
@@ -225,7 +247,7 @@ class ProfileSelector(gtk.Window):
         """Check if a Profile with that name already exists."""
         if(os.path.exists(absolutePath)):
             dialog = gtk.MessageDialog(
-                parent=self,
+                parent=self.window,
                 flags=gtk.DIALOG_DESTROY_WITH_PARENT|gtk.DIALOG_MODAL,
                 type=gtk.MESSAGE_ERROR,
                 buttons=gtk.BUTTONS_CANCEL,
