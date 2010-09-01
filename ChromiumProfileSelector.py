@@ -1,13 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Dieses Script zeigt einen Dialog an bevor Chromium mit dem ausgewählten Profil gestartet wird.
-
-Benutzung:
-    Wähle ein Profil und starte Chromium mit einem Klick auf ok.
-
-Pfade:
-    * Ort der Profile: ~/.config/ChromiumProfiles
-    * Ausführbare Datei: /usr/bin/chromium-browser
+"""
+Script to add a profile chooser to Chromium or Chrome.
 
 License:
     is free software, you can redistribute or modify it under the terms of the GNU General Public License Version 2 or any later Version (see http://www.gnu.org/copyleft/gpl.html for details). 
@@ -19,13 +13,21 @@ License:
 import gtk
 import dircache
 import os
+import sys
 import shutil
 
-profileDirectory = os.path.expanduser("~/.config/ChromiumProfiles")
-chromiumExecutable = "/usr/bin/chromium-browser"
+CHROMIUM=0
+CHROME=1
+
 
 class ProfileSelector:
     """A class that is the selection window and contains all the functions nessessary."""
+# In general this Variable should not be changed
+    profileDirectory = os.path.expanduser("~/.config/ChromiumProfiles")
+# List of possible chrome chromium commands
+    chromiumExecutables = [(CHROMIUM, "chromium-browser"), (CHROME, "google-chrome")]
+    chromiumExecutable = None
+    detectedProgramm = None
 
     window = gtk.Window()
     editAndListBox = gtk.HBox(False,8)
@@ -41,6 +43,8 @@ class ProfileSelector:
     treeView = None
 
     def __init__(self):
+        self.check_for_executables(self.chromiumExecutables)
+
         self.window.set_size_request(400,400)
         self.window.set_position(gtk.WIN_POS_CENTER)
         self.window.set_border_width(8)
@@ -65,6 +69,20 @@ class ProfileSelector:
         self.window.add(self.topAndNavBox)
         self.window.show_all()
         return
+
+    def check_for_executables(self, list_of_executables):
+        for cur in list_of_executables:
+            cmdline = os.popen("".join(["which ", cur[1]]))
+            executable = cmdline.readline()
+            if executable:
+                self.chromiumExecutable = executable[:-1]
+                self.detectedProgramm = cur[0]
+                print "found ", self.chromiumExecutable
+                return
+        sys.exit("Neither chromium-browser nor google-chrome found! If the executables are named different please feel free to contact me enau[kleines T].w@googlemail.com")
+
+
+
 
     def add_list(self, hbox):
         """Create and add the profilelist to the gtk treeView."""
@@ -113,10 +131,10 @@ class ProfileSelector:
     def create_model(self):
         """Populate the list of available Profiles."""
         store = gtk.ListStore(str)
-        fileList = dircache.listdir(profileDirectory)
+        fileList = dircache.listdir(self.profileDirectory)
         store.clear()
         for cur in fileList:
-            absPath = os.path.join(profileDirectory, cur)
+            absPath = os.path.join(self.profileDirectory, cur)
             if os.path.isdir(absPath):
 
                 if "Default" in dircache.listdir(absPath):
@@ -156,7 +174,7 @@ class ProfileSelector:
 
         newProfile = self.getProfileName(message="Geben sie den namen des neuen Profils an:")
 
-        absolutePath = os.path.join(profileDirectory, newProfile)
+        absolutePath = os.path.join(self.profileDirectory, newProfile)
 
         if (self.checkIfExists(absolutePath=absolutePath)):
             return
@@ -176,8 +194,8 @@ class ProfileSelector:
         item=itemsToMove[0]
 
         newProfile = self.getProfileName("Geben sie den neuen Namen des Profils %s ein:" % item)
-        absolutePathOld = os.path.join(profileDirectory, item)
-        absolutePathNew = os.path.join(profileDirectory, newProfile)
+        absolutePathOld = os.path.join(self.profileDirectory, item)
+        absolutePathNew = os.path.join(self.profileDirectory, newProfile)
 
         if (self.checkIfExists(absolutePath = absolutePathNew)):
             return
@@ -195,7 +213,7 @@ class ProfileSelector:
         itemsToDelete =model.get(itr,0)
 
         for item in itemsToDelete:
-            shutil.rmtree(os.path.join(profileDirectory, item))
+            shutil.rmtree(os.path.join(self.profileDirectory, item))
 
         self.treeView.props.model = self.create_model()
         self.enableDisableButton()
@@ -217,11 +235,11 @@ class ProfileSelector:
         items =model.get(itr,0)
         item=items[0]
 
-        absolutePath = os.path.join(profileDirectory, item)
+        absolutePath = os.path.join(self.profileDirectory, item)
 
         pid = os.fork()
         if pid == 0:
-            os.execve(chromiumExecutable, [chromiumExecutable, "--user-data-dir=%s" % absolutePath,], os.environ)
+            os.execve(self.chromiumExecutable, [self.chromiumExecutable, "--user-data-dir=%s" % absolutePath,], os.environ)
         gtk.main_quit()
         return
 
