@@ -79,7 +79,15 @@ class ProfileSelector:
                 self.detectedProgramm = cur[0]
                 print "found ", self.chromiumExecutable
                 return
-        sys.exit("Neither chromium-browser nor google-chrome found! If the executables are named different please feel free to contact me enau[kleines T].w@googlemail.com")
+        stringlist = ""
+        for cur in self.chromiumExecutables:
+            stringlist = stringlist + "\t* " + cur[1] + "\n"
+
+        self.error("Neither Chrome nor Chromium found!\n\n"
+                + "The following executables have been checked:\n"
+                + stringlist
+                + "If the executables are named different  in your distribution please feel free to contact me enau" + "t.w" + "@googlemail.com",
+                exit = True)
 
 
 
@@ -267,19 +275,26 @@ class ProfileSelector:
         text = entry.get_text()
         dialog.destroy()
         return text
+    
+    def error(self, message, exit = False):
+        """Show an error message in a Dialog."""
+        dialog = gtk.MessageDialog(
+                self.window,
+                gtk.DIALOG_MODAL,
+                gtk.MESSAGE_ERROR,
+                gtk.BUTTONS_CLOSE)
+        dialog.set_markup(message)
+        dialog.show_all()
+        dialog.run()
+        dialog.destroy()
+        if(exit):
+            sys.exit(message)
+        return
 
     def checkIfExists(self, absolutePath):
         """Check if a Profile with that name already exists."""
         if(os.path.exists(absolutePath)):
-            dialog = gtk.MessageDialog(
-                parent=self.window,
-                flags=gtk.DIALOG_DESTROY_WITH_PARENT|gtk.DIALOG_MODAL,
-                type=gtk.MESSAGE_ERROR,
-                buttons=gtk.BUTTONS_CANCEL,
-                message_format="Das Profil existiert bereits")
-            dialog.show_all()
-            dialog.run()
-            dialog.destroy()
+            self.error("The Profilename you intend to use is already used.")
             return True
         else:
             return False
